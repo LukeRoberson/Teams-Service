@@ -9,6 +9,7 @@ import logging
 import os
 
 from api import teams_api
+from teams_token import TokenManager
 
 
 # Get global config
@@ -39,6 +40,10 @@ app.config['SECRET_KEY'] = os.getenv('api_master_pw')
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['GLOBAL_CONFIG'] = global_config['config']
 Session(app)
+
+# Setup the Teams token manager
+token_manager = TokenManager()
+token_manager.get_token()
 
 # Register the security API blueprint
 app.register_blueprint(teams_api)
