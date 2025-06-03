@@ -23,7 +23,7 @@ from flask import (
 
 import logging
 
-from graph import ChatList
+from graph import ChatList, ChatMessage
 
 
 # Create a Flask blueprint for the API
@@ -61,8 +61,14 @@ def message():
 
     # Get the chat-id and message from the request body
     data = request.get_json()
-    if not data or 'chat-id' not in data or 'message' not in data:
-        logging.error("Missing chat-id or message in request data")
+    if (
+        not data or
+        'chat-id' not in data or
+        'message' not in data
+    ):
+        logging.error(
+            "/api/message: Missing chat-id or message in request data"
+        )
         return jsonify(
             {
                 'result': 'error',
@@ -70,12 +76,44 @@ def message():
             }
         ), 400
 
-    # If everything is ok
-    return jsonify(
-        {
-            'result': 'success'
-        }
-    )
+    token = current_app.config['TOKEN_MANAGER'].request_token()
+    if not token:
+        logging.error("/api/message: Failed to obtain access token")
+        return jsonify(
+            {
+                'result': 'error',
+                'error': 'No access token available, '
+                'check the service account is logged in.'
+            }
+        )
+
+    with ChatMessage(
+        chat_id=data['chat-id'],
+        access_token=token,
+    ) as chat_message:
+        # Send the message
+        result = chat_message.send_message(
+            message=data['message']
+        )
+
+    if result:
+        return jsonify(
+            {
+                'result': 'success'
+            }
+        )
+
+    else:
+        logging.error(
+            "/api/message: Failed to send message to chat "
+            f"{data['chat-id']}"
+        )
+        return jsonify(
+            {
+                'result': 'error',
+                'error': 'Failed to send message'
+            }
+        )
 
 
 @teams_api.route(

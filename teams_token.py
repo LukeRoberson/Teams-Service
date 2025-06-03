@@ -67,11 +67,6 @@ class TeamsToken:
         response = requests.get("http://security:5100/api/token")
         if response.status_code == 200:
             data = response.json()
-            logging.info(
-                "TeamsToken.get_token: "
-                "raw response from security service: %s",
-                data
-            )
 
         else:
             logging.error(

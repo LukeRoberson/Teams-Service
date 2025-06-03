@@ -1,12 +1,16 @@
 """
 Classes and functions to communicate with the MS Graph API.
+
+Classes:
+    ChatList: Represents a list of chats for a user.
+    ChatMessage: Represents a chat message in a chat, used to send messages.
 """
 
 import requests
 import logging
 
 
-base_url = "https://graph.microsoft.com/v1.0"
+BASE_URL = "https://graph.microsoft.com/v1.0"
 
 
 class ChatList:
@@ -80,7 +84,7 @@ class ChatList:
 
         if exc_type is not None:
             logging.error(
-                f"An error occurred: {exc_value}",
+                f"ChatList: An error occurred: {exc_value}",
                 exc_info=True
             )
 
@@ -91,7 +95,7 @@ class ChatList:
         Retrieves the list of chats for the service account
         """
 
-        url = f"{base_url}/users/{self.user_upn}/chats?$expand=members"
+        url = f"{BASE_URL}/users/{self.user_upn}/chats?$expand=members"
         headers = {
             "Authorization": f"Bearer {self.access_token}",
             "Accept": "application/json"
@@ -165,3 +169,112 @@ class ChatList:
             })
 
         self.chat_list = chat_list
+
+
+class ChatMessage:
+    """
+    Represents a chat message in a chat.
+        Used to send messages to a chat.
+
+    Methods:
+        __init__(chat_id: str, access_token: str) -> None:
+            Initializes the ChatMessage with chat ID and access token.
+        __enter__() -> 'ChatMessage':
+            Context manager entry method.
+        __exit__() -> None:
+            Context manager exit method.
+        send_message(message: str) -> bool:
+            Sends a message to the chat.
+    """
+
+    def __init__(
+        self,
+        chat_id: str,
+        access_token: str,
+    ) -> None:
+        """
+        Initializes the ChatMessage.
+        """
+
+        self.chat_id = chat_id
+        self.access_token = access_token
+
+    def __enter__(
+        self
+    ) -> 'ChatMessage':
+        """
+        Context manager entry method.
+
+        Returns:
+            ChatMessage: The instance itself.
+        """
+
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type,
+        exc_value: Exception,
+        traceback: object
+    ) -> None:
+        """
+        Context manager exit method.
+
+        Args:
+            exc_type (type): The exception type.
+            exc_value (Exception): The exception value.
+            traceback (object): The traceback object.
+        """
+
+        if exc_type is not None:
+            logging.error(
+                f"ChatMessage: An error occurred: {exc_value}",
+                exc_info=True
+            )
+
+    def send_message(
+        self,
+        message: str
+    ) -> bool:
+        """
+        Sends a message to the chat.
+
+        Args:
+            message (str): The message to send.
+
+        Returns:
+            bool: True if the message was sent successfully, False otherwise.
+        """
+
+        url = f"{BASE_URL}/chats/{self.chat_id}/messages"
+        headers = {
+            "Authorization": f"Bearer {self.access_token}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "body": {
+                "content": message
+            }
+        }
+
+        # API call to Graph API to send the message
+        response = requests.post(
+            url,
+            headers=headers,
+            json=payload
+        )
+
+        # Check the response status code (should be 201 for success)
+        if response.status_code == 201:
+            logging.info(
+                "ChatMessage.send_message: "
+                "Message sent successfully."
+            )
+            return True
+
+        else:
+            logging.error(
+                "ChatMessage.send_message: "
+                f"Failed to send message. Response: {response.text}"
+            )
+            return False
