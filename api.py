@@ -7,6 +7,10 @@ Blueprint lists routes for the Teams API. This is registered in main.py
 Routes:
     - /api/health:
         Health check endpoint to ensure the service is running.
+    - /api/message:
+        Endpoint to send messages to MS Teams.
+    - /api/chat_list:
+        Endpoint to get a list of chats for the user.
 """
 
 
@@ -14,9 +18,12 @@ from flask import (
     Blueprint,
     jsonify,
     request,
+    current_app
 )
 
 import logging
+
+from graph import ChatList
 
 
 # Create a Flask blueprint for the API
@@ -72,39 +79,32 @@ def message():
 
 
 @teams_api.route(
-    '/api/id',
-    methods=['POST']
+    '/api/chat_list',
+    methods=['GET']
 )
-def chat_id():
-    """
-    Lookup a chat-id for a user or group.
+def chat_list():
+    '''
+    Get a list of chats for the user.
 
-    Expects a JSON payload with 'user-id'
-        This could represent a group as well.
+    The username is the service account in the teams config.
+    A bearer token is requested from the token manager.
 
-    Returns a JSON response:
-        - 'result': 'success' or error
-        - 'chat-id': The chat-id if successful
-        - 'name': The name of the user or group if successful
-        - 'error': Error message if unsuccessful
-    """
+    Returns a JSON response with the list of chats.
+    '''
 
-    # Get the user-id from the request body
-    data = request.get_json()
-    if not data or 'user-id' not in data:
-        logging.error("Missing user-id in request data")
-        return jsonify(
-            {
-                'result': 'error',
-                'error': 'Missing user-id'
-            }
-        ), 400
+    # Get a list of user chats
+    user = current_app.config['GLOBAL_CONFIG']['teams']['user']
+    token_manager = current_app.config['TOKEN_MANAGER']
+    token = token_manager.request_token()
 
-    # If everything is ok
+    logging.info(f"/api/chat_list: Requesting chats for user: {user}")
+    with ChatList(user, token) as chat_list:
+        # Get the chats for the user
+        chats = chat_list.chat_list
+
     return jsonify(
         {
             'result': 'success',
-            'chat-id': '1234567890',  # Example chat-id
-            'name': 'Example User'  # Example name
+            'chats': chats
         }
     )

@@ -9,7 +9,7 @@ import logging
 import os
 
 from api import teams_api
-from teams_token import TokenManager
+from teams_token import TeamsToken
 
 
 # Get global config
@@ -34,16 +34,17 @@ log_level = getattr(logging, log_level_str, logging.INFO)
 logging.basicConfig(level=log_level)
 logging.info("Logging level set to: %s", log_level_str)
 
+# Setup the Teams token manager
+token_manager = TeamsToken()
+token_manager.get_token()
+
 # Create the Flask application
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('api_master_pw')
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['GLOBAL_CONFIG'] = global_config['config']
+app.config['TOKEN_MANAGER'] = token_manager
 Session(app)
-
-# Setup the Teams token manager
-token_manager = TokenManager()
-token_manager.get_token()
 
 # Register the security API blueprint
 app.register_blueprint(teams_api)

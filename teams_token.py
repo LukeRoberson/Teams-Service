@@ -46,13 +46,17 @@ class TeamsToken:
 
     def get_token(
         self,
-    ) -> None:
+    ) -> bool:
         """
         Get the Teams token from the security service.
         Store the token for later use.
 
         1. Set the token and validity to None, to clear any previous token.
         2. Get the token from the security service.
+
+        Returns:
+            - bool: True if the token was retrieved successfully,
+                False if there was an error
         """
 
         # Reset values
@@ -63,18 +67,26 @@ class TeamsToken:
         response = requests.get("http://security:5100/api/token")
         if response.status_code == 200:
             data = response.json()
+            logging.info(
+                "TeamsToken.get_token: "
+                "raw response from security service: %s",
+                data
+            )
 
         else:
             logging.error(
-                f"Failed to get Teams token from security service."
+                f"TeamsToken.get_token: "
+                f"Failed to get Teams token from security service.\n"
                 f"Error: {response.text}"
             )
+
+            return False
 
         # Check if the response contains the expected data
         if (
             not data or
             'result' not in data or
-            data['result'] != 'error' or
+            data['result'] == 'error' or
             'token' not in data or
             'validity' not in data
         ):
@@ -82,17 +94,22 @@ class TeamsToken:
                 "Failed to get Teams token from security service"
             )
 
+            return False
+
         # Check the token validity
         if data["validity"] < time():
             logging.error(
                 "The Teams token is not valid. Invalid validity time"
             )
 
+            return False
+
         # Store the token and validity
         self.token = data["token"]
         self.validity = data["validity"]
 
         logging.debug("Teams token retrieved successfully")
+        return True
 
     def request_token(
         self,
