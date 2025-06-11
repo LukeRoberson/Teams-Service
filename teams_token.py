@@ -18,6 +18,9 @@ import requests
 import logging
 
 
+TOKEN_URL = "http://security:5100/api/token"
+
+
 class TeamsToken:
     """
     Class to manage the Teams user token.
@@ -64,7 +67,7 @@ class TeamsToken:
         self.validity = None
 
         # API call to the security service
-        response = requests.get("http://security:5100/api/token")
+        response = requests.get(TOKEN_URL, timeout=3)
         if response.status_code == 200:
             data = response.json()
 
