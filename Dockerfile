@@ -1,7 +1,18 @@
 # Use the custom base image
 FROM lukerobertson19/base-os:latest
-LABEL description="The teams service for the AI assistant. Manages sending and receiving messages from teams."
-LABEL version="1.0.0"
+
+# OCI labels for the image
+LABEL org.opencontainers.image.title="AI Assistant Teams Service"
+LABEL org.opencontainers.image.description="Interaction with Microsoft's Graph API to send messages to Teams users and groups."
+LABEL org.opencontainers.image.base.name="lukerobertson19/base-os:latest"
+LABEL org.opencontainers.image.source="https://github.com/LukeRoberson/Teams-Service"
+LABEL org.opencontainers.image.version="1.0.0"
+
+# The health check URL for the service
+LABEL net.networkdirection.healthz="http://localhost:5100/api/health"
+
+# The name of the service, as it should appear in the compose file
+LABEL net.networkdirection.service.name="teams"
 
 # Copy the rest of the application code
 COPY . .
