@@ -1,6 +1,7 @@
 """
-API module.
-    Used for communication with other services.
+Module: teams_api.py
+
+API endpoints for the Teams service.
 
 Blueprint lists routes for the Teams API. This is registered in main.py
 
@@ -11,18 +12,26 @@ Routes:
         Endpoint to send messages to MS Teams.
     - /api/chat_list:
         Endpoint to get a list of chats for the user.
+
+Dependencies:
+    - Flask: For creating the web API.
+    - requests: For making HTTP requests to the Microsoft Graph API.
+    - logging: For logging messages and errors.
+
+Custom Dependencies:
+    - graph: Custom module for handling Teams chats and messages.
 """
 
-
+# Standard library imports
 from flask import (
     Blueprint,
     jsonify,
     request,
     current_app
 )
-
 import logging
 
+# Custom imports
 from graph import ChatList, ChatMessage
 
 
