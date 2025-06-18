@@ -25,9 +25,11 @@ Custom Dependencies:
 # Standard library imports
 from flask import (
     Blueprint,
-    jsonify,
+    Response,
     request,
-    current_app
+    current_app,
+    jsonify,
+    make_response,
 )
 import logging
 
@@ -59,7 +61,7 @@ def health():
     '/api/message',
     methods=['POST']
 )
-def message():
+def message() -> Response:
     """
     Enable services to send messages to MS Teams.
 
@@ -78,22 +80,28 @@ def message():
         logging.error(
             "/api/message: Missing chat-id or message in request data"
         )
-        return jsonify(
-            {
-                'result': 'error',
-                'error': 'Missing chat-id or message'
-            }
-        ), 400
+        return make_response(
+            jsonify(
+                {
+                    "result": "error",
+                    "error": "Missing chat-id or message"
+                }
+            ),
+            400
+        )
 
     token = current_app.config['TOKEN_MANAGER'].request_token()
     if not token:
         logging.error("/api/message: Failed to obtain access token")
-        return jsonify(
-            {
-                'result': 'error',
-                'error': 'No access token available, '
-                'check the service account is logged in.'
-            }
+        return make_response(
+            jsonify(
+                {
+                    "result": "error",
+                    "error": "No access token available, "
+                    "check the service account is logged in."
+                }
+            ),
+            400
         )
 
     with ChatMessage(
@@ -106,10 +114,13 @@ def message():
         )
 
     if result:
-        return jsonify(
-            {
-                'result': 'success'
-            }
+        return make_response(
+            jsonify(
+                {
+                    "result": "success"
+                }
+            ),
+            200
         )
 
     else:
@@ -117,11 +128,14 @@ def message():
             "/api/message: Failed to send message to chat "
             f"{data['chat-id']}"
         )
-        return jsonify(
-            {
-                'result': 'error',
-                'error': 'Failed to send message'
-            }
+        return make_response(
+            jsonify(
+                {
+                    "result": "error",
+                    "error": "Failed to send message"
+                }
+            ),
+            400
         )
 
 
@@ -129,7 +143,7 @@ def message():
     '/api/chat_list',
     methods=['GET']
 )
-def chat_list():
+def chat_list() -> Response:
     '''
     Get a list of chats for the user.
 
@@ -149,9 +163,12 @@ def chat_list():
         # Get the chats for the user
         chats = chat_list.chat_list
 
-    return jsonify(
-        {
-            'result': 'success',
-            'chats': chats
-        }
+    return make_response(
+        jsonify(
+            {
+                "result": "success",
+                "chats": chats
+            },
+            200
+        )
     )
