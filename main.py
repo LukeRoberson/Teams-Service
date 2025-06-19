@@ -17,8 +17,6 @@ Usage:
     Build the Docker image and run it with the provided Dockerfile.
 
 Functions:
-    - fetch_global_config:
-        Fetches the global configuration from the web interface.
     - logging_setup:
         Sets up the root logger for the web service.
     - create_app:
@@ -37,56 +35,23 @@ Dependencies:
 Custom Dependencies:
     - api.teams_api: Contains API endpoints for Teams interactions.
     - teams_token: For managing Teams tokens.
+    - sdk.Config: For managing configuration settings.
 """
 
 
 # Standard library imports
 from flask import Flask
 from flask_session import Session
-import requests
 import logging
 import os
 
 # Custom imports
 from api import teams_api
 from teams_token import TeamsToken
+from sdk import Config
 
 
 CONFIG_URL = "http://core:5100/api/config"
-
-
-def fetch_global_config(
-    url: str = CONFIG_URL,
-) -> dict:
-    """
-    Fetch the global configuration from the core service.
-
-    Args:
-        url (str): The URL to fetch the global configuration from.
-
-    Returns:
-        dict: The global configuration loaded from the core service.
-
-    Raises:
-        RuntimeError: If the global configuration cannot be loaded.
-    """
-
-    global_config = None
-    try:
-        response = requests.get(url, timeout=3)
-        response.raise_for_status()
-        global_config = response.json()
-
-    except Exception as e:
-        logging.critical(
-            "Failed to fetch global config from core service."
-            f" Error: {e}"
-        )
-
-    if global_config is None:
-        raise RuntimeError("Could not load global config from core service")
-
-    return global_config['config']
 
 
 def logging_setup(
@@ -115,7 +80,6 @@ def logging_setup(
 
 
 def create_app(
-    config: dict,
     token_manager: TeamsToken,
 ) -> Flask:
     """
@@ -135,7 +99,6 @@ def create_app(
     app.config['SECRET_KEY'] = os.getenv('api_master_pw')
     app.config['SESSION_TYPE'] = 'filesystem'
     app.config['SESSION_FILE_DIR'] = '/app/flask_session'
-    app.config['GLOBAL_CONFIG'] = config
     app.config['TOKEN_MANAGER'] = token_manager
     Session(app)
 
@@ -146,7 +109,10 @@ def create_app(
 
 
 # Config and logging setup
-global_config = fetch_global_config(CONFIG_URL)
+global_config = {}
+with Config(CONFIG_URL) as config:
+    global_config = config.read()
+
 logging_setup(global_config)
 
 # Setup the Teams token manager
@@ -155,6 +121,5 @@ token_manager.get_token()
 
 # Create the Flask application
 app = create_app(
-    config=global_config,
     token_manager=token_manager,
 )

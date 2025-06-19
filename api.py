@@ -20,6 +20,7 @@ Dependencies:
 
 Custom Dependencies:
     - graph: Custom module for handling Teams chats and messages.
+    - sdk.Config: Custom module for managing configuration settings.
 """
 
 # Standard library imports
@@ -35,6 +36,10 @@ import logging
 
 # Custom imports
 from graph import ChatList, ChatMessage
+from sdk import Config
+
+
+CONFIG_URL = "http://core:5100/api/config"
 
 
 # Create a Flask blueprint for the API
@@ -154,7 +159,11 @@ def chat_list() -> Response:
     '''
 
     # Get a list of user chats
-    user = current_app.config['GLOBAL_CONFIG']['teams']['user']
+    config = {}
+    with Config(CONFIG_URL) as config_reader:
+        config = config_reader.read()
+
+    user = config['teams']['user']
     token_manager = current_app.config['TOKEN_MANAGER']
     token = token_manager.request_token()
 
