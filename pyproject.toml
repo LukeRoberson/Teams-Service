@@ -1,0 +1,9 @@
+[tool.project-metadata]
+name = "Teams Service"
+description = "The Teams service for the AI assistant app"
+version = "1.0.2"
+
+[tool.versioning]
+major = 1
+minor = 0
+patch = 2
